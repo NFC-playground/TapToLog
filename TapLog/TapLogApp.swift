@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct TapLogApp: App {
@@ -13,5 +14,12 @@ struct TapLogApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [
+            User.self,
+            Activity.self,
+            NFCTag.self,
+            NFCTagActivity.self,
+            TrackingSession.self
+        ])
     }
 }
