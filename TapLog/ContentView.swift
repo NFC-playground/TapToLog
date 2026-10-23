@@ -19,6 +19,9 @@ struct ContentView: View {
             Tab("NFC Tags", systemImage: "wave.3.right") {
                 TagSetupView()
             }
+            Tab("Settings", systemImage: "gear") {
+                SettingsView()
+            }
         }
     }
 }
