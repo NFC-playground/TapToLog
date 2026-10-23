@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		A4E19311308995FE00A2BCDA /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E19310308995FE00A2BCDA /* Models.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		A4011B4C3086C3920052BF80 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -31,7 +27,6 @@
 		A4011B3E3086C3900052BF80 /* TapLog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TapLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4011B4B3086C3920052BF80 /* TapLogTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TapLogTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4011B553086C3920052BF80 /* TapLogUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TapLogUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A4E19310308995FE00A2BCDA /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -80,7 +75,6 @@
 		A4011B353086C3900052BF80 = {
 			isa = PBXGroup;
 			children = (
-				A4E19310308995FE00A2BCDA /* Models.swift */,
 				A4011B403086C3900052BF80 /* TapLog */,
 				A4011B4E3086C3920052BF80 /* TapLogTests */,
 				A4011B583086C3920052BF80 /* TapLogUITests */,
@@ -242,7 +236,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A4E19311308995FE00A2BCDA /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
