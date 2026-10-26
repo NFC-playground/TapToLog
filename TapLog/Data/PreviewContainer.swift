@@ -7,6 +7,10 @@
 import Foundation
 import SwiftData
 
+//previewContainer creates an empty in-memory database with your five models,
+// fills it with seed data, and returns it, so previews
+// have realistic data to show without touching your real data.
+
 extension SeedData {
     /// Creates a preview container with seed data
     @MainActor
