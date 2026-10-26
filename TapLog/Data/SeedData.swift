@@ -210,44 +210,28 @@ struct SeedData {
     /// Deletes all data from the model context
     static func clearAllData(modelContext: ModelContext) {
         print("Clearing all data...")
-        
+
         do {
-            // Delete in order to respect relationships
-            try modelContext.delete(model: TrackingSession.self)
-            try modelContext.delete(model: NFCTagActivity.self)
-            try modelContext.delete(model: NFCTag.self)
-            try modelContext.delete(model: Activity.self)
-            try modelContext.delete(model: User.self)
-            
+            for session in try modelContext.fetch(FetchDescriptor<TrackingSession>()) {
+                modelContext.delete(session)
+            }
+            for link in try modelContext.fetch(FetchDescriptor<NFCTagActivity>()) {
+                modelContext.delete(link)
+            }
+            for tag in try modelContext.fetch(FetchDescriptor<NFCTag>()) {
+                modelContext.delete(tag)
+            }
+            for activity in try modelContext.fetch(FetchDescriptor<Activity>()) {
+                modelContext.delete(activity)
+            }
+            for user in try modelContext.fetch(FetchDescriptor<User>()) {
+                modelContext.delete(user)
+            }
+
             try modelContext.save()
             print("✅ All data cleared successfully!")
         } catch {
             print("❌ Failed to clear data: \(error)")
         }
-    }
-}
-
-// MARK: - Preview Helper
-
-extension SeedData {
-    /// Creates a preview container with seed data
-    @MainActor
-    static var previewContainer: ModelContainer {
-        let schema = Schema([
-            User.self,
-            Activity.self,
-            NFCTag.self,
-            NFCTagActivity.self,
-            TrackingSession.self
-        ])
-        
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        
-        let container = try! ModelContainer(for: schema, configurations: configuration)
-        
-        // Generate seed data for preview
-        generateSeedData(modelContext: container.mainContext)
-        
-        return container
     }
 }

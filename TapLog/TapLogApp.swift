@@ -14,6 +14,8 @@ struct TapLogApp: App {
         WindowGroup {
             ContentView()
         }
+        //creates database that can be access
+        // by using: @Environment(\.modelContext)
         .modelContainer(for: [
             User.self,
             Activity.self,

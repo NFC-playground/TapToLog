@@ -14,12 +14,21 @@ struct SettingsView: View {
     @Query private var activities: [Activity]
     @Query private var nfcTags: [NFCTag]
     @Query private var sessions: [TrackingSession]
+    @AppStorage("currentUserID") private var currentUserID: String = ""
     
     @State private var showingClearConfirmation = false
     
     var body: some View {
         NavigationStack {
             List {
+                Section("Current User") {
+                    Picker("Logged in as", selection: $currentUserID) {
+                        Text("None").tag("")
+                        ForEach(users) { user in
+                            Text(user.name).tag(user.id.uuidString)
+                        }
+                    }
+                }
                 Section("Data Overview") {
                     HStack {
                         Text("Users")
@@ -67,6 +76,12 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            // if the saved ID doesn’t match existing user, reset to None
+            .onAppear {
+                if !users.contains(where: { $0.id.uuidString == currentUserID }) {
+                    currentUserID = ""
+                }
+            }
             .alert("Clear All Data?", isPresented: $showingClearConfirmation) {
                 Button("Cancel", role: .cancel) { }
                 Button("Clear", role: .destructive) {
