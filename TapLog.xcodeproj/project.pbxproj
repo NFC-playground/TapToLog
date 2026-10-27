@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A48438A0308EE3A9006EEB5D /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A484389F308EE3A9006EEB5D /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A4011B4C3086C3920052BF80 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A48438A0308EE3A9006EEB5D /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = TapLog;
 			packageProductDependencies = (
+				A484389F308EE3A9006EEB5D /* Supabase */,
 			);
 			productName = TapLog;
 			productReference = A4011B3E3086C3900052BF80 /* TapLog.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = A4011B353086C3900052BF80;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A484389E308EE3A9006EEB5D /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A4011B3F3086C3900052BF80 /* Products */;
 			projectDirPath = "";
@@ -550,6 +559,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A484389E308EE3A9006EEB5D /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A484389F308EE3A9006EEB5D /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A484389E308EE3A9006EEB5D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A4011B363086C3900052BF80 /* Project object */;
 }
