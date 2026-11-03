@@ -12,7 +12,7 @@ import SwiftData
 struct TapLogApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
         //creates database that can be access
         // by using: @Environment(\.modelContext)
