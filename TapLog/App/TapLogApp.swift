@@ -17,7 +17,7 @@ struct TapLogApp: App {
             if authManager.isAuthenticated {
                 ContentView()
                     .environmentObject(authManager)
-            } else if authManager.isLoading {
+            } else if authManager.isCheckingSession {
                 ProgressView("Checking authentication...")
             } else {
                 LoginView()

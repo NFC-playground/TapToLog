@@ -11,32 +11,27 @@ import Supabase
 @MainActor
 class ActivityService: ObservableObject {
     private let client: SupabaseClient
-    
+
     init(client: SupabaseClient = SupabaseManager.shared.client) {
         self.client = client
     }
-    
+
     // MARK: - Fetch Methods
-    
+
     /// Fetch all activities for a specific user
     func fetchActivities(forUserId userId: UUID) async throws -> [ActivityDTO] {
-        let response = try await client
+        try await client
             .from("activities")
-            .select("*")
+            .select()
             .eq("user_id", value: userId.uuidString)
             .order("name", ascending: true)
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let activities = try decoder.decode([ActivityDTO].self, from: response.data)
-        return activities
+            .value
     }
-    
+
     /// Fetch all activities (for admin/debug)
     func fetchAllActivities() async throws -> [ActivityDTO] {
-        let response = try await client
+        try await client
             .from("activities")
             .select("""
                 *,
@@ -44,51 +39,34 @@ class ActivityService: ObservableObject {
             """)
             .order("name", ascending: true)
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let activities = try decoder.decode([ActivityDTO].self, from: response.data)
-        return activities
+            .value
     }
-    
-    /// Fetch a single activity by ID
+
+    /// Fetch a single activity by ID. Returns nil if no row matches.
     func fetchActivity(id: UUID) async throws -> ActivityDTO? {
-        let response = try await client
+        let activities: [ActivityDTO] = try await client
             .from("activities")
             .select()
             .eq("id", value: id.uuidString)
-            .single()
+            .limit(1)
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let activity = try? decoder.decode(ActivityDTO.self, from: response.data)
-        return activity
+            .value
+        return activities.first
     }
-    
+
     // MARK: - Create Methods
-    
+
     /// Create a new activity
     func createActivity(_ activity: ActivityDTO) async throws -> ActivityDTO {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        
-        let response = try await client
+        try await client
             .from("activities")
             .insert(activity)
             .select()
             .single()
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let createdActivity = try decoder.decode(ActivityDTO.self, from: response.data)
-        return createdActivity
+            .value
     }
-    
+
     /// Convenience method to create an activity
     func createActivity(
         name: String,
@@ -104,31 +82,27 @@ class ActivityService: ObservableObject {
         )
         return try await createActivity(activity)
     }
-    
+
     // MARK: - Update Methods
-    
+
     /// Update an existing activity
     func updateActivity(_ activity: ActivityDTO) async throws -> ActivityDTO {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        
-        let response = try await client
+        // Strip any joined object so only real columns are sent
+        var row = activity
+        row.user = nil
+
+        return try await client
             .from("activities")
-            .update(activity)
+            .update(row)
             .eq("id", value: activity.id.uuidString)
             .select()
             .single()
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let updatedActivity = try decoder.decode(ActivityDTO.self, from: response.data)
-        return updatedActivity
+            .value
     }
-    
+
     // MARK: - Delete Methods
-    
+
     /// Delete an activity by ID
     func deleteActivity(id: UUID) async throws {
         try await client

@@ -16,6 +16,7 @@ struct SignUpView: View {
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var showingError = false
+    @State private var showingConfirmEmail = false
     
     var body: some View {
         NavigationStack {
@@ -70,6 +71,11 @@ struct SignUpView: View {
                     }
                 }
             }
+            .alert("Check Your Email", isPresented: $showingConfirmEmail) {
+                Button("OK") { dismiss() }
+            } message: {
+                Text("We sent a confirmation link to \(email). Confirm your email, then sign in.")
+            }
             .alert("Error", isPresented: $showingError) {
                 Button("OK") { }
             } message: {
@@ -92,8 +98,12 @@ struct SignUpView: View {
     
     private func signUp() async {
         do {
-            try await authManager.signUp(email: email, password: password, name: name)
-            dismiss()
+            switch try await authManager.signUp(email: email, password: password, name: name) {
+            case .signedIn:
+                dismiss()
+            case .needsEmailConfirmation:
+                showingConfirmEmail = true
+            }
         } catch {
             showingError = true
         }

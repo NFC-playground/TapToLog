@@ -4,27 +4,23 @@
 //
 //  Created by Elissa Alarmani on 10/21/26.
 //
-import SwiftData
 import SwiftUI
 
 struct HomeView: View {
-    // Temporary: replaced by the real active session once SwiftData lands.
-    @State private var startedAt: Date? = nil
-    
-    //use modelContext this to access the database
-    @Environment(\.modelContext) private var modelContext
-    
-    @Query private var users: [User]
-    @Query private var activities: [Activity]
-    
-    @AppStorage("currentUserID") private var currentUserID: String = ""
-    
-    // computed property User or nil
-    private var currentUser: User? {
-        //$0 is shorthand for “the user currently being checked
-        users.first { $0.id.uuidString == currentUserID }
+    @EnvironmentObject var authManager: AuthManager
+    @StateObject private var activityService = ActivityService()
+    @StateObject private var sessionService = TrackingSessionService()
+
+    @State private var activities: [ActivityDTO] = []
+    @State private var selectedActivityId: UUID?
+    @State private var startedAt: Date?
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    private var selectedActivity: ActivityDTO? {
+        activities.first { $0.id == selectedActivityId }
     }
-    
+
     var body: some View {
         NavigationStack {
             Group {
@@ -35,61 +31,102 @@ struct HomeView: View {
                 }
             }
             .navigationTitle("Home")
+            .task(id: authManager.currentUserId) {
+                await loadActivities()
+            }
+            .alert("Couldn't Save Session", isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
+            )) {
+                Button("OK") { }
+            } message: {
+                Text(errorMessage ?? "")
+            }
         }
     }
-    
+
     private var idleView: some View {
         VStack(spacing: 16) {
             Text("No active timer")
                 .font(.headline)
             Text("Tap your NFC to start")
                 .foregroundStyle(.secondary)
+
+            Picker("Activity", selection: $selectedActivityId) {
+                Text("No activity").tag(UUID?.none)
+                ForEach(activities) { activity in
+                    Text(activity.name).tag(UUID?.some(activity.id))
+                }
+            }
+
             Button("Start (test)") {
                 startedAt = .now
             }
             .buttonStyle(.borderedProminent)
+            .disabled(isSaving)
         }
     }
-    
+
     private func runningView(startedAt: Date) -> some View {
         VStack(spacing: 24) {
-            Text("Reading")
+            Text(selectedActivity?.name ?? "No activity")
                 .font(.title2)
             Text(startedAt, style: .timer)
                 .font(.system(size: 64, weight: .bold, design: .rounded))
                 .monospacedDigit()
             Button("Stop", role: .destructive) {
-                stopTimer()
+                Task { await stopTimer() }
             }
             .buttonStyle(.borderedProminent)
         }
     }
-    private func stopTimer() {
-        guard let startedAt else { return }
-        self.startedAt = nil
-        
-        guard let currentUser else {
-            print("⚠️ No current user selected. Session not saved.")
+
+    // MARK: - Data
+
+    private func loadActivities() async {
+        guard let userId = authManager.currentUserId else {
+            activities = []
             return
         }
-        
-        
-        let session = TrackingSession(
-            date: startedAt,
-            duration: Date.now.timeIntervalSince(startedAt),
-            sessionDescription: "",
-            user: currentUser,
-            activity: activities.first,
-            nfcTag: nil
-        )
-        modelContext.insert(session)
-        print("✅ Saved session for \(currentUser.name)")
-        
+        do {
+            activities = try await activityService.fetchActivities(forUserId: userId)
+            if selectedActivity == nil {
+                selectedActivityId = activities.first?.id
+            }
+        } catch {
+            print("❌ Error loading activities: \(error)")
+        }
+    }
+
+    private func stopTimer() async {
+        guard let startedAt else { return }
         self.startedAt = nil
+
+        guard let userId = authManager.currentUserId else {
+            errorMessage = "You're not signed in."
+            return
+        }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            _ = try await sessionService.createSession(
+                userId: userId,
+                activityId: selectedActivityId,
+                nfcTagId: nil,
+                date: startedAt,
+                duration: Date.now.timeIntervalSince(startedAt)
+            )
+            print("✅ Saved session")
+        } catch {
+            errorMessage = error.localizedDescription
+            print("❌ Error saving session: \(error)")
+        }
     }
 }
 
 #Preview {
     HomeView()
-        .modelContainer(SeedData.previewContainer)
+        .environmentObject(AuthManager())
 }

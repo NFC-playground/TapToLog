@@ -11,16 +11,16 @@ import Supabase
 @MainActor
 class TrackingSessionService: ObservableObject {
     private let client: SupabaseClient
-    
+
     init(client: SupabaseClient = SupabaseManager.shared.client) {
         self.client = client
     }
-    
+
     // MARK: - Fetch Methods
-    
+
     /// Fetch all sessions for a specific user, sorted by date (newest first)
     func fetchSessions(forUserId userId: UUID) async throws -> [TrackingSessionDTO] {
-        let response = try await client
+        try await client
             .from("tracking_sessions")
             .select("""
                 *,
@@ -30,17 +30,12 @@ class TrackingSessionService: ObservableObject {
             .eq("user_id", value: userId.uuidString)
             .order("date", ascending: false)
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let sessions = try decoder.decode([TrackingSessionDTO].self, from: response.data)
-        return sessions
+            .value
     }
-    
+
     /// Fetch all sessions (for admin/debug purposes)
     func fetchAllSessions() async throws -> [TrackingSessionDTO] {
-        let response = try await client
+        try await client
             .from("tracking_sessions")
             .select("""
                 *,
@@ -50,80 +45,60 @@ class TrackingSessionService: ObservableObject {
             """)
             .order("date", ascending: false)
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let sessions = try decoder.decode([TrackingSessionDTO].self, from: response.data)
-        return sessions
+            .value
     }
-    
+
     // MARK: - Create Methods
-    
+
     /// Insert a new tracking session
     func createSession(_ session: TrackingSessionDTO) async throws -> TrackingSessionDTO {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        
-        let response = try await client
+        try await client
             .from("tracking_sessions")
-            .insert(session)
+            .insert(Self.columnsOnly(session))
             .select()
             .single()
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let createdSession = try decoder.decode(TrackingSessionDTO.self, from: response.data)
-        return createdSession
+            .value
     }
-    
+
     /// Convenience method to create a session with basic info
     func createSession(
         userId: UUID,
         activityId: UUID?,
         nfcTagId: UUID?,
+        date: Date = Date(),
         duration: TimeInterval,
         description: String? = nil
     ) async throws -> TrackingSessionDTO {
         let session = TrackingSessionDTO(
             id: UUID(),
-            date: Date(),
+            date: date,
             duration: duration,
             sessionDescription: description,
             userId: userId,
             activityId: activityId,
             nfcTagId: nfcTagId
         )
-        
+
         return try await createSession(session)
     }
-    
+
     // MARK: - Update Methods
-    
+
     /// Update an existing session
     func updateSession(_ session: TrackingSessionDTO) async throws -> TrackingSessionDTO {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        
-        let response = try await client
+        try await client
             .from("tracking_sessions")
-            .update(session)
+            .update(Self.columnsOnly(session))
             .eq("id", value: session.id.uuidString)
             .select()
             .single()
             .execute()
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        
-        let updatedSession = try decoder.decode(TrackingSessionDTO.self, from: response.data)
-        return updatedSession
+            .value
     }
-    
+
     // MARK: - Delete Methods
-    
+
     /// Delete a session by ID
     func deleteSession(id: UUID) async throws {
         try await client
@@ -132,7 +107,7 @@ class TrackingSessionService: ObservableObject {
             .eq("id", value: id.uuidString)
             .execute()
     }
-    
+
     /// Delete all sessions for a user
     func deleteAllSessions(forUserId userId: UUID) async throws {
         try await client
@@ -140,5 +115,16 @@ class TrackingSessionService: ObservableObject {
             .delete()
             .eq("user_id", value: userId.uuidString)
             .execute()
+    }
+
+    // MARK: - Helpers
+
+    /// Joined objects (activity, tag, user) aren't real columns, so drop them before writing
+    private static func columnsOnly(_ session: TrackingSessionDTO) -> TrackingSessionDTO {
+        var row = session
+        row.user = nil
+        row.activity = nil
+        row.nfcTag = nil
+        return row
     }
 }
