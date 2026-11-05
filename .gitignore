@@ -1,2 +1,6 @@
+
+# Xcode user-specific files
 xcuserdata/
-TapLog/Data/Secrets.swift
+
+# Local secrets
+TapLog/Configuration/Secrets.swift
