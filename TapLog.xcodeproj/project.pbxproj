@@ -8,6 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		A48438A0308EE3A9006EEB5D /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = A484389F308EE3A9006EEB5D /* Supabase */; };
+		A4DF6B36309BFDFF00EB645F /* UserDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B35309BFDFF00EB645F /* UserDTO.swift */; };
+		A4DF6B38309BFE0300EB645F /* ActivityDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B37309BFE0300EB645F /* ActivityDTO.swift */; };
+		A4DF6B3A309BFE0700EB645F /* NFCTagDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B39309BFE0700EB645F /* NFCTagDTO.swift */; };
+		A4DF6B3C309BFE0A00EB645F /* NFCTagActivityDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B3B309BFE0A00EB645F /* NFCTagActivityDTO.swift */; };
+		A4DF6B3E309BFE0F00EB645F /* TrackingSessionDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B3D309BFE0F00EB645F /* TrackingSessionDTO.swift */; };
+		A4DF6B41309BFE1A00EB645F /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B40309BFE1A00EB645F /* AuthManager.swift */; };
+		A4DF6B43309BFE2900EB645F /* UserService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B42309BFE2900EB645F /* UserService.swift */; };
+		A4DF6B45309BFE3400EB645F /* TrackingSessionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B44309BFE3400EB645F /* TrackingSessionService.swift */; };
+		A4DF6B47309BFE3E00EB645F /* ActivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B46309BFE3E00EB645F /* ActivityService.swift */; };
+		A4DF6B52309BFECF00EB645F /* SupabaseManagerNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4DF6B51309BFECF00EB645F /* SupabaseManagerNew.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +41,16 @@
 		A4011B3E3086C3900052BF80 /* TapLog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TapLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4011B4B3086C3920052BF80 /* TapLogTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TapLogTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4011B553086C3920052BF80 /* TapLogUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TapLogUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A4DF6B35309BFDFF00EB645F /* UserDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDTO.swift; sourceTree = "<group>"; };
+		A4DF6B37309BFE0300EB645F /* ActivityDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDTO.swift; sourceTree = "<group>"; };
+		A4DF6B39309BFE0700EB645F /* NFCTagDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCTagDTO.swift; sourceTree = "<group>"; };
+		A4DF6B3B309BFE0A00EB645F /* NFCTagActivityDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCTagActivityDTO.swift; sourceTree = "<group>"; };
+		A4DF6B3D309BFE0F00EB645F /* TrackingSessionDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingSessionDTO.swift; sourceTree = "<group>"; };
+		A4DF6B40309BFE1A00EB645F /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		A4DF6B42309BFE2900EB645F /* UserService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserService.swift; sourceTree = "<group>"; };
+		A4DF6B44309BFE3400EB645F /* TrackingSessionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingSessionService.swift; sourceTree = "<group>"; };
+		A4DF6B46309BFE3E00EB645F /* ActivityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityService.swift; sourceTree = "<group>"; };
+		A4DF6B51309BFECF00EB645F /* SupabaseManagerNew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseManagerNew.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -83,6 +103,16 @@
 				A4011B403086C3900052BF80 /* TapLog */,
 				A4011B4E3086C3920052BF80 /* TapLogTests */,
 				A4011B583086C3920052BF80 /* TapLogUITests */,
+				A4DF6B35309BFDFF00EB645F /* UserDTO.swift */,
+				A4DF6B37309BFE0300EB645F /* ActivityDTO.swift */,
+				A4DF6B39309BFE0700EB645F /* NFCTagDTO.swift */,
+				A4DF6B3B309BFE0A00EB645F /* NFCTagActivityDTO.swift */,
+				A4DF6B3D309BFE0F00EB645F /* TrackingSessionDTO.swift */,
+				A4DF6B40309BFE1A00EB645F /* AuthManager.swift */,
+				A4DF6B42309BFE2900EB645F /* UserService.swift */,
+				A4DF6B44309BFE3400EB645F /* TrackingSessionService.swift */,
+				A4DF6B46309BFE3E00EB645F /* ActivityService.swift */,
+				A4DF6B51309BFECF00EB645F /* SupabaseManagerNew.swift */,
 				A4011B3F3086C3900052BF80 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -245,6 +275,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A4DF6B3E309BFE0F00EB645F /* TrackingSessionDTO.swift in Sources */,
+				A4DF6B36309BFDFF00EB645F /* UserDTO.swift in Sources */,
+				A4DF6B43309BFE2900EB645F /* UserService.swift in Sources */,
+				A4DF6B47309BFE3E00EB645F /* ActivityService.swift in Sources */,
+				A4DF6B3C309BFE0A00EB645F /* NFCTagActivityDTO.swift in Sources */,
+				A4DF6B38309BFE0300EB645F /* ActivityDTO.swift in Sources */,
+				A4DF6B52309BFECF00EB645F /* SupabaseManagerNew.swift in Sources */,
+				A4DF6B3A309BFE0700EB645F /* NFCTagDTO.swift in Sources */,
+				A4DF6B41309BFE1A00EB645F /* AuthManager.swift in Sources */,
+				A4DF6B45309BFE3400EB645F /* TrackingSessionService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
