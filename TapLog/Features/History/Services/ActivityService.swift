@@ -35,7 +35,7 @@ class ActivityService: ObservableObject {
             .from("activities")
             .select("""
                 *,
-                user:users(*)
+                user:profiles(*)
             """)
             .order("name", ascending: true)
             .execute()

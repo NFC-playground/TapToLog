@@ -34,36 +34,19 @@ struct ForgotPasswordView: View {
                     .padding(.horizontal)
                 
                 TextField("Email", text: $email)
-                    .textContentType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.emailAddress)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
+                    .emailInput()
+                    .textFieldStyle(.rounded)
                     .padding(.horizontal)
                     .padding(.top, 20)
-                
-                Button {
+
+                Button("Send Reset Link") {
                     Task {
                         await resetPassword()
                     }
-                } label: {
-                    if authManager.isLoading {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .tint(.white)
-                    } else {
-                        Text("Send Reset Link")
-                            .fontWeight(.semibold)
-                    }
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(isEmailValid ? Color.blue : Color.gray)
-                .foregroundStyle(.white)
-                .cornerRadius(10)
-                .padding(.horizontal)
+                .buttonStyle(.primary(isLoading: authManager.isLoading))
                 .disabled(!isEmailValid || authManager.isLoading)
+                .padding(.horizontal)
                 
                 Spacer()
             }

@@ -38,19 +38,12 @@ struct LoginView: View {
                 // Email & Password Fields
                 VStack(spacing: 16) {
                     TextField("Email", text: $email)
-                        .textContentType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.emailAddress)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
-                    
+                        .emailInput()
+
                     SecureField("Password", text: $password)
                         .textContentType(.password)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(10)
                 }
+                .textFieldStyle(.rounded)
                 .padding(.horizontal)
                 
                 // Forgot Password
@@ -64,27 +57,14 @@ struct LoginView: View {
                 .padding(.top, 4)
                 
                 // Sign In Button
-                Button {
+                Button("Sign In") {
                     Task {
                         await signIn()
                     }
-                } label: {
-                    if authManager.isLoading {
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .tint(.white)
-                    } else {
-                        Text("Sign In")
-                            .fontWeight(.semibold)
-                    }
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(isFormValid ? Color.blue : Color.gray)
-                .foregroundStyle(.white)
-                .cornerRadius(10)
-                .padding(.horizontal)
+                .buttonStyle(.primary(isLoading: authManager.isLoading))
                 .disabled(!isFormValid || authManager.isLoading)
+                .padding(.horizontal)
                 
                 Spacer()
                 

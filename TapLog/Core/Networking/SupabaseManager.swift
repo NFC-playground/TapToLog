@@ -11,6 +11,8 @@ import Supabase
 /// Holds the single shared Supabase client.
 /// `SupabaseClient` is thread-safe (Sendable), so this doesn't need to live on the main actor.
 final class SupabaseManager: Sendable {
+    // singleton instance to be used thoughout app
+    // static = singleton = global point of access
     static let shared = SupabaseManager()
 
     let client: SupabaseClient

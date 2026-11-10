@@ -10,7 +10,8 @@ import Supabase
 
 @MainActor
 class AuthManager: ObservableObject {
-    // MARK: - Published Properties
+    // MARK: - Published Properties -  things that should trigger UI updates
+    // swift ui redraws when you sign in or out based on the supabase auth client
 
     @Published var currentUser: Supabase.User?
     @Published var isAuthenticated = false
@@ -26,8 +27,11 @@ class AuthManager: ObservableObject {
 
     // MARK: - Initialization
 
+    // optional supbase client
     init(client: SupabaseClient? = nil) {
+        // if client passed in use that else use the shared client
         let client = client ?? SupabaseManager.shared.client
+        // store resolved client to current object
         self.client = client
         self.userService = UserService(client: client)
 
@@ -43,18 +47,20 @@ class AuthManager: ObservableObject {
     }
 
     // MARK: - Session Management
-
+    // update state whenever authentication change happens
     private func apply(event: AuthChangeEvent, session: Session?) {
         currentUser = session?.user
         isAuthenticated = (session != nil)
         isCheckingSession = false
-
+        // filter events so this block only runs when app first launches
+        // and discovers an active session
+        // or when user just sined in
         if let session, event == .initialSession || event == .signedIn {
             Task { await ensureUserRow(for: session.user) }
         }
     }
 
-    /// Make sure the signed-in user has a row in the `users` table.
+    /// Make sure the signed-in user has a row in the `profiles` table.
     /// Done here (with a real session) rather than at sign-up, because when email
     /// confirmation is on, sign-up returns no session and RLS would block the insert.
     private func ensureUserRow(for user: Supabase.User) async {
@@ -64,10 +70,10 @@ class AuthManager: ObservableObject {
 
         do {
             try await userService.ensureUserExists(
-                UserDTO(id: user.id, name: name, email: user.email, createdAt: Date())
+                UserDTO(id: user.id, name: name, createdAt: Date())
             )
         } catch {
-            print("❌ Could not create users row: \(error)")
+            print("❌ Could not create profile row: \(error)")
         }
     }
 
@@ -87,6 +93,8 @@ class AuthManager: ObservableObject {
         errorMessage = nil
 
         do {
+            
+            // TODO: add redirect URLoncef email confirmation setup
             let response = try await client.auth.signUp(
                 email: email,
                 password: password,
@@ -94,8 +102,9 @@ class AuthManager: ObservableObject {
             )
 
             // The auth state listener updates currentUser / isAuthenticated
-            // and creates the users row once a session exists.
+            // and creates the profile row once a session exists.
             print("✅ User signed up: \(email)")
+            // if the session is nil means they still need to confirm email
             return response.session == nil ? .needsEmailConfirmation : .signedIn
         } catch {
             errorMessage = error.localizedDescription

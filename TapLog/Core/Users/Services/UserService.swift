@@ -24,7 +24,7 @@ class UserService: ObservableObject {
     /// Fetch all users
     func fetchAllUsers() async throws -> [UserDTO] {
         try await client
-            .from("users")
+            .from("profiles")
             .select()
             .order("name", ascending: true)
             .execute()
@@ -34,21 +34,9 @@ class UserService: ObservableObject {
     /// Fetch a single user by ID. Returns nil if no row matches.
     func fetchUser(id: UUID) async throws -> UserDTO? {
         let users: [UserDTO] = try await client
-            .from("users")
+            .from("profiles")
             .select()
             .eq("id", value: id.uuidString)
-            .limit(1)
-            .execute()
-            .value
-        return users.first
-    }
-
-    /// Fetch user by email. Returns nil if no row matches.
-    func fetchUser(email: String) async throws -> UserDTO? {
-        let users: [UserDTO] = try await client
-            .from("users")
-            .select()
-            .eq("email", value: email)
             .limit(1)
             .execute()
             .value
@@ -60,7 +48,7 @@ class UserService: ObservableObject {
     /// Create a new user
     func createUser(_ user: UserDTO) async throws -> UserDTO {
         try await client
-            .from("users")
+            .from("profiles")
             .insert(user)
             .select()
             .single()
@@ -73,16 +61,15 @@ class UserService: ObservableObject {
         let user = UserDTO(
             id: UUID(),
             name: name,
-            email: nil,
             createdAt: Date()
         )
         return try await createUser(user)
     }
 
-    /// Create the user's row if it doesn't exist yet. Leaves an existing row unchanged.
+    /// Create the user's profile row if it doesn't exist yet. Leaves an existing row unchanged.
     func ensureUserExists(_ user: UserDTO) async throws {
         try await client
-            .from("users")
+            .from("profiles")
             .upsert(user, onConflict: "id", returning: .minimal, ignoreDuplicates: true)
             .execute()
     }
@@ -92,7 +79,7 @@ class UserService: ObservableObject {
     /// Update an existing user
     func updateUser(_ user: UserDTO) async throws -> UserDTO {
         try await client
-            .from("users")
+            .from("profiles")
             .update(user)
             .eq("id", value: user.id.uuidString)
             .select()
@@ -108,7 +95,7 @@ class UserService: ObservableObject {
         }
 
         return try await client
-            .from("users")
+            .from("profiles")
             .update(NameUpdate(name: newName))
             .eq("id", value: userId.uuidString)
             .select()
@@ -122,7 +109,7 @@ class UserService: ObservableObject {
     /// Delete a user by ID
     func deleteUser(id: UUID) async throws {
         try await client
-            .from("users")
+            .from("profiles")
             .delete()
             .eq("id", value: id.uuidString)
             .execute()

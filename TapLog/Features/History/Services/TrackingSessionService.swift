@@ -41,7 +41,7 @@ class TrackingSessionService: ObservableObject {
                 *,
                 activity:activities(*),
                 nfc_tag:nfc_tags(*),
-                user:users(*)
+                user:profiles(*)
             """)
             .order("date", ascending: false)
             .execute()

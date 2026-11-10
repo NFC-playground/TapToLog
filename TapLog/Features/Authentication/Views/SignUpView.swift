@@ -20,48 +20,40 @@ struct SignUpView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("Full Name", text: $name)
-                        .textContentType(.name)
-                    
-                    TextField("Email", text: $email)
-                        .textContentType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.emailAddress)
-                    
-                    SecureField("Password", text: $password)
-                        .textContentType(.newPassword)
-                    
-                    SecureField("Confirm Password", text: $confirmPassword)
-                        .textContentType(.newPassword)
-                } header: {
-                    Text("Account Information")
-                } footer: {
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(spacing: 16) {
+                        TextField("Full Name", text: $name)
+                            .textContentType(.name)
+
+                        TextField("Email", text: $email)
+                            .emailInput()
+
+                        SecureField("Password", text: $password)
+                            .textContentType(.newPassword)
+
+                        SecureField("Confirm Password", text: $confirmPassword)
+                            .textContentType(.newPassword)
+                    }
+                    .textFieldStyle(.rounded)
+
                     Text("Password must be at least 6 characters")
-                }
-                
-                Section {
-                    Button {
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button("Create Account") {
                         Task {
                             await signUp()
                         }
-                    } label: {
-                        if authManager.isLoading {
-                            HStack {
-                                Spacer()
-                                ProgressView()
-                                Spacer()
-                            }
-                        } else {
-                            Text("Create Account")
-                                .frame(maxWidth: .infinity)
-                                .fontWeight(.semibold)
-                        }
                     }
+                    .buttonStyle(.primary(isLoading: authManager.isLoading))
                     .disabled(!isFormValid || authManager.isLoading)
                 }
+                .padding()
+                .padding(.top, 20)
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Sign Up")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
