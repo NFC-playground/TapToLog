@@ -27,52 +27,7 @@ struct SettingsView: View {
                         Task { try? await authManager.signOut() }
                     }
                 }
-                // Counts below are local SwiftData (seed/dev) data, not Supabase
-                Section("Local Data Overview") {
-                    HStack {
-                        Text("Users")
-                        Spacer()
-                        Text("\(users.count)")
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Activities")
-                        Spacer()
-                        Text("\(activities.count)")
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("NFC Tags")
-                        Spacer()
-                        Text("\(nfcTags.count)")
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Tracking Sessions")
-                        Spacer()
-                        Text("\(sessions.count)")
-                            .foregroundStyle(.secondary)
-                    }
-                }
                 
-                Section("Development Tools") {
-                    Button {
-                        Task { @MainActor in
-                            SeedData.generateSeedData(modelContext: modelContext)
-                        }
-                    } label: {
-                        Label("Generate Seed Data", systemImage: "cylinder.fill")
-                    }
-                    
-                    Button(role: .destructive) {
-                        showingClearConfirmation = true
-                    } label: {
-                        Label("Clear All Data", systemImage: "trash.fill")
-                    }
-                }
             }
             .navigationTitle("Settings")
             .alert("Clear All Data?", isPresented: $showingClearConfirmation) {
