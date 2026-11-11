@@ -10,9 +10,19 @@ import SwiftData
 
 @main
 struct TapLogApp: App {
+    @StateObject private var authManager = AuthManager()
+    
     var body: some Scene {
         WindowGroup {
-            RootView()
+            if authManager.isAuthenticated {
+                ContentView()
+                    .environmentObject(authManager)
+            } else if authManager.isCheckingSession {
+                ProgressView("Checking authentication...")
+            } else {
+                LoginView()
+                    .environmentObject(authManager)
+            }
         }
         //creates database that can be access
         // by using: @Environment(\.modelContext)
