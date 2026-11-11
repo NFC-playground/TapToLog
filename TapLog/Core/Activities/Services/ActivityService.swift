@@ -57,10 +57,10 @@ class ActivityService: ObservableObject {
     // MARK: - Create Methods
 
     /// Create a new activity
-    func createActivity(_ activity: ActivityDTO) async throws -> ActivityDTO {
+    func createActivity(_ newActivity: NewActivity) async throws -> ActivityDTO {
         try await client
             .from("activities")
-            .insert(activity)
+            .insert(newActivity)
             .select()
             .single()
             .execute()
@@ -70,17 +70,12 @@ class ActivityService: ObservableObject {
     /// Convenience method to create an activity
     func createActivity(
         name: String,
-        description: String,
+        description: String? = nil,
         userId: UUID
     ) async throws -> ActivityDTO {
-        let activity = ActivityDTO(
-            id: UUID(),
-            name: name,
-            activityDescription: description,
-            createdAt: Date(),
-            userId: userId
+        try await createActivity(
+            NewActivity(name: name, activityDescription: description, userId: userId)
         )
-        return try await createActivity(activity)
     }
 
     // MARK: - Update Methods

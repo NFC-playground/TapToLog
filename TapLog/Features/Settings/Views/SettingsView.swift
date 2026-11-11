@@ -27,7 +27,15 @@ struct SettingsView: View {
                         Task { try? await authManager.signOut() }
                     }
                 }
-                
+
+                Section("Tracking") {
+                    NavigationLink {
+                        ManageActivitiesView()
+                    } label: {
+                        Label("Activities", systemImage: "list.bullet")
+                    }
+                }
+
             }
             .navigationTitle("Settings")
             .alert("Clear All Data?", isPresented: $showingClearConfirmation) {
@@ -48,4 +56,5 @@ struct SettingsView: View {
     SettingsView()
         .modelContainer(SeedData.previewContainer)
         .environmentObject(AuthManager())
+        .environmentObject(ActivityStore())
 }

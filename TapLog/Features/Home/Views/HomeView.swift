@@ -8,17 +8,16 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var authManager: AuthManager
-    @StateObject private var activityService = ActivityService()
+    @EnvironmentObject var activityStore: ActivityStore
     @StateObject private var sessionService = TrackingSessionService()
 
-    @State private var activities: [ActivityDTO] = []
     @State private var selectedActivityId: UUID?
     @State private var startedAt: Date?
     @State private var isSaving = false
     @State private var errorMessage: String?
 
     private var selectedActivity: ActivityDTO? {
-        activities.first { $0.id == selectedActivityId }
+        activityStore.activities.first { $0.id == selectedActivityId }
     }
 
     var body: some View {
@@ -31,8 +30,10 @@ struct HomeView: View {
                 }
             }
             .navigationTitle("Home")
-            .task(id: authManager.currentUserId) {
-                await loadActivities()
+            // Runs on first appear and whenever the list changes (added in Settings,
+            // finished loading, etc.) so the picker always points at a real activity.
+            .onChange(of: activityStore.activities, initial: true) {
+                ensureValidSelection()
             }
             .alert("Couldn't Save Session", isPresented: Binding(
                 get: { errorMessage != nil },
@@ -46,26 +47,41 @@ struct HomeView: View {
     }
 
     private var idleView: some View {
-        VStack(spacing: 16) {
-            Text("No active timer")
-                .font(.headline)
-            Text("Tap your NFC to start")
-                .foregroundStyle(.secondary)
-
-            Picker("Activity", selection: $selectedActivityId) {
-                Text("No activity").tag(UUID?.none)
-                ForEach(activities) { activity in
-                    Text(activity.name).tag(UUID?.some(activity.id))
+        VStack {
+            
+            
+            VStack(spacing: 16) {
+                Text("No active timer")
+                    .font(.headline)
+                Text("Tap your NFC to start")
+                    .foregroundStyle(.secondary)
+                
+                if activityStore.activities.isEmpty {
+                    Text("Add an activity in Settings → Activities to start tracking.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                } else {
+                    Picker("Activity", selection: $selectedActivityId) {
+                        ForEach(activityStore.activities) { activity in
+                            Text(activity.name).tag(UUID?.some(activity.id))
+                        }
+                    }
                 }
             }
-
-            Button("Start (test)") {
-                startedAt = .now
+            VStack(spacing: 16){
+                Button("Start (test)") {
+                    startedAt = .now
+                    //put to bottom
+                }
+                .buttonStyle(.borderedProminent, )
+                .disabled(isSaving || selectedActivityId == nil)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(isSaving)
+            
         }
     }
+            
 
     private func runningView(startedAt: Date) -> some View {
         VStack(spacing: 24) {
@@ -83,18 +99,10 @@ struct HomeView: View {
 
     // MARK: - Data
 
-    private func loadActivities() async {
-        guard let userId = authManager.currentUserId else {
-            activities = []
-            return
-        }
-        do {
-            activities = try await activityService.fetchActivities(forUserId: userId)
-            if selectedActivity == nil {
-                selectedActivityId = activities.first?.id
-            }
-        } catch {
-            print("❌ Error loading activities: \(error)")
+    /// Keep the selection pointing at an activity that exists; default to the first one.
+    private func ensureValidSelection() {
+        if selectedActivity == nil {
+            selectedActivityId = activityStore.activities.first?.id
         }
     }
 
@@ -106,6 +114,10 @@ struct HomeView: View {
             errorMessage = "You're not signed in."
             return
         }
+        guard let activityId = selectedActivityId else {
+            errorMessage = "Choose an activity before tracking."
+            return
+        }
 
         isSaving = true
         defer { isSaving = false }
@@ -113,7 +125,7 @@ struct HomeView: View {
         do {
             _ = try await sessionService.createSession(
                 userId: userId,
-                activityId: selectedActivityId,
+                activityId: activityId,
                 nfcTagId: nil,
                 date: startedAt,
                 duration: Date.now.timeIntervalSince(startedAt)
@@ -129,4 +141,5 @@ struct HomeView: View {
 #Preview {
     HomeView()
         .environmentObject(AuthManager())
+        .environmentObject(ActivityStore())
 }

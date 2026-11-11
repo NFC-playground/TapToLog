@@ -10,7 +10,7 @@ import Foundation
 struct ActivityDTO: Codable, Identifiable, Hashable {
     let id: UUID
     let name: String
-    let activityDescription: String
+    let activityDescription: String?   // nullable in the `activities` table
     let createdAt: Date
     let userId: UUID?
     
