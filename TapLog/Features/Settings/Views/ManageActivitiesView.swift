@@ -20,7 +20,7 @@ struct ManageActivitiesView: View {
                 ContentUnavailableView(
                     "No activities yet",
                     systemImage: "list.bullet",
-                    description: Text("Tap + to add something you want to track, like Reading or Piano.")
+                    description: Text("Tap + to add something you want to track")
                 )
             } else {
                 ForEach(activityStore.activities) { activity in
@@ -31,15 +31,19 @@ struct ManageActivitiesView: View {
         }
         .navigationTitle("Activities")
         .toolbar {
+            //primary action is top right corner
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     newActivityName = ""
                     showingAddAlert = true
                 } label: {
+                    // plus icon for adding new acitivity
                     Label("Add Activity", systemImage: "plus")
                 }
             }
         }
+        // $ -> binding, alert opens when true
+        // sets back to false when tapping any enabled button (add or cancel)
         .alert("New Activity", isPresented: $showingAddAlert) {
             TextField("Name", text: $newActivityName)
                 .textInputAutocapitalization(.words)

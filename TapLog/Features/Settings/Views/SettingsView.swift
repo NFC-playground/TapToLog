@@ -9,11 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var users: [User]
-    @Query private var activities: [Activity]
-    @Query private var nfcTags: [NFCTag]
-    @Query private var sessions: [TrackingSession]
     @EnvironmentObject var authManager: AuthManager
     
     @State private var showingClearConfirmation = false
@@ -27,7 +22,7 @@ struct SettingsView: View {
                         Task { try? await authManager.signOut() }
                     }
                 }
-
+                // list of activities
                 Section("Tracking") {
                     NavigationLink {
                         ManageActivitiesView()
@@ -38,23 +33,12 @@ struct SettingsView: View {
 
             }
             .navigationTitle("Settings")
-            .alert("Clear All Data?", isPresented: $showingClearConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Clear", role: .destructive) {
-                    Task { @MainActor in
-                        SeedData.clearAllData(modelContext: modelContext)
-                    }
-                }
-            } message: {
-                Text("This will delete all users, activities, tags, and tracking sessions. This action cannot be undone.")
-            }
         }
     }
 }
 
 #Preview {
     SettingsView()
-        .modelContainer(SeedData.previewContainer)
         .environmentObject(AuthManager())
         .environmentObject(ActivityStore())
 }

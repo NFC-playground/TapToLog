@@ -46,6 +46,7 @@ struct HomeView: View {
         }
     }
 
+    // when there is no active timer running
     private var idleView: some View {
             VStack(spacing: 16) {
                 Text("No active timer")
@@ -66,17 +67,15 @@ struct HomeView: View {
                         }
                     }
                 }
-        
-                Button("Start (test)") {
+                Button("Start") {
                     startedAt = .now
-                    //put to bottom
                 }
                 .buttonStyle(.borderedProminent, )
                 .disabled(isSaving || selectedActivityId == nil)
             }
         }
             
-
+    // 
     private func runningView(startedAt: Date) -> some View {
         VStack(spacing: 24) {
             Text(selectedActivity?.name ?? "No activity")
