@@ -12,6 +12,16 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Create placeholder Secrets.swift
+        run: |
+          mkdir -p TapLog/Configuration
+          cat > TapLog/Configuration/Secrets.swift << 'EOF'
+          enum Secrets {
+              static let supabaseURL = "https://placeholder.supabase.co"
+              static let supabaseKey = "placeholder-key"
+          }
+          EOF
 
       - name: Show Xcode version
         run: xcodebuild -version
