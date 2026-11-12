@@ -22,6 +22,9 @@ struct HomeView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
 
+    /// Completed sessions for the summaries, newest first.
+    @State private var sessions: [TrackingSessionDTO] = []
+
     // MARK: - Derived state
 
     /// When the running timer started, but only if it belongs to the signed-in user.
@@ -41,6 +44,18 @@ struct HomeView: View {
         activityStore.activities.first { $0.id == selectedActivityId }
     }
 
+    private var todayTotal: TimeInterval {
+        SessionStats.totalDuration(of: sessions, since: SessionStats.startOfToday())
+    }
+
+    private var weekTotal: TimeInterval {
+        SessionStats.totalDuration(of: sessions, since: SessionStats.startOfWeek())
+    }
+
+    private var recentSessions: [TrackingSessionDTO] {
+        Array(sessions.prefix(5))
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -58,6 +73,9 @@ struct HomeView: View {
             .onChange(of: activityStore.activities, initial: true) {
                 ensureValidSelection()
             }
+            .task {
+                await loadSessions()
+            }
             .alert("Couldn't Save Session", isPresented: Binding(
                 get: { errorMessage != nil },
                 set: { if !$0 { errorMessage = nil } }
@@ -72,6 +90,19 @@ struct HomeView: View {
     // MARK: - Idle
 
     private var idleView: some View {
+        ScrollView {
+            VStack(spacing: 32) {
+                startSection
+                summarySection
+            }
+            .padding()
+        }
+        .refreshable {
+            await loadSessions()
+        }
+    }
+
+    private var startSection: some View {
         VStack(spacing: 16) {
             Text("No active timer")
                 .font(.headline)
@@ -98,6 +129,50 @@ struct HomeView: View {
             .buttonStyle(.borderedProminent)
             .disabled(selectedActivityId == nil)
         }
+    }
+
+    private var summarySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                statCard(title: "Today", seconds: todayTotal)
+                statCard(title: "This week", seconds: weekTotal)
+            }
+
+            if !recentSessions.isEmpty {
+                Text("Recent")
+                    .font(.headline)
+
+                ForEach(recentSessions) { session in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(session.activity?.name ?? "Unknown activity")
+                            Text(session.date, format: .dateTime.month().day().hour().minute())
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(DurationFormat.short(session.duration))
+                            .monospacedDigit()
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+    }
+
+    private func statCard(title: String, seconds: TimeInterval) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text(DurationFormat.short(seconds))
+                .font(.title2.bold())
+                .monospacedDigit()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color(.systemGray6))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - Running
@@ -164,6 +239,7 @@ struct HomeView: View {
             )
             // Only clear the timer once the session is safely saved.
             clearActiveTimer()
+            await loadSessions()
         } catch {
             // The timer keeps running, so tapping Stop again retries the save.
             errorMessage = "\(error.localizedDescription) Your timer is still running. Tap Stop to try again."
@@ -180,6 +256,18 @@ struct HomeView: View {
     private func ensureValidSelection() {
         if selectedActivity == nil {
             selectedActivityId = activityStore.activities.first?.id
+        }
+    }
+
+    // MARK: - Data
+
+    private func loadSessions() async {
+        guard let userId = authManager.currentUserId else { return }
+        do {
+            sessions = try await sessionService.fetchSessions(forUserId: userId)
+        } catch {
+            // Summaries are a nice-to-have; keep the screen usable if this fails.
+            print("❌ Error loading sessions for summaries: \(error)")
         }
     }
 }
