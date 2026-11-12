@@ -6,13 +6,18 @@ on:
   push:
     branches: [main]
 
+# If you push again while a run is in progress, cancel the old run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: macos-26
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Create placeholder Secrets.swift
         run: |
           mkdir -p TapLog/Configuration
@@ -22,6 +27,14 @@ jobs:
               static let supabaseKey = "placeholder-key"
           }
           EOF
+
+      # Reuse downloaded Swift packages (Supabase) between runs.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: .build/SourcePackages
+          key: spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: spm-
 
       - name: Show Xcode version
         run: xcodebuild -version
@@ -33,4 +46,6 @@ jobs:
             -scheme TapLog \
             -destination 'platform=iOS Simulator,name=iPhone 17' \
             -only-testing:TapLogTests \
+            -parallel-testing-enabled NO \
+            -clonedSourcePackagesDirPath .build/SourcePackages \
             CODE_SIGNING_ALLOWED=NO
