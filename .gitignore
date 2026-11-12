@@ -3,4 +3,4 @@
 xcuserdata/
 
 # Local secrets
-TapLog/Configuration/Secrets.swift
+TapLog/Configuration/Secrets.swift.DS_Store
