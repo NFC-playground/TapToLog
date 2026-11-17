@@ -45,15 +45,23 @@ struct HomeView: View {
     }
 
     private var todayTotal: TimeInterval {
-        SessionStats.totalDuration(of: sessions, since: SessionStats.startOfToday())
+        SessionStats.totalDuration(
+            of: sessions,
+            since: SessionStats.startOfToday(),
+            activityId: selectedActivityId
+        )
     }
 
     private var weekTotal: TimeInterval {
-        SessionStats.totalDuration(of: sessions, since: SessionStats.startOfWeek())
+        SessionStats.totalDuration(
+            of: sessions,
+            since: SessionStats.startOfWeek(),
+            activityId: selectedActivityId
+        )
     }
 
     private var recentSessions: [TrackingSessionDTO] {
-        Array(sessions.prefix(5))
+        Array(SessionStats.sessions(sessions, for: selectedActivityId).prefix(5))
     }
 
     // MARK: - Body
@@ -133,15 +141,22 @@ struct HomeView: View {
 
     private var summarySection: some View {
         VStack(alignment: .leading, spacing: 16) {
+            Text(selectedActivity?.name ?? "All activities")
+                .font(.headline)
+
             HStack(spacing: 12) {
                 statCard(title: "Today", seconds: todayTotal)
                 statCard(title: "This week", seconds: weekTotal)
             }
 
-            if !recentSessions.isEmpty {
-                Text("Recent")
-                    .font(.headline)
+            Text("Recent")
+                .font(.headline)
 
+            if recentSessions.isEmpty {
+                Text("No sessions for \(selectedActivity?.name ?? "this activity") yet.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            } else {
                 ForEach(recentSessions) { session in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
