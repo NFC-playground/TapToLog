@@ -11,39 +11,53 @@ struct HomeView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var activityStore: ActivityStore
     @StateObject private var sessionService = TrackingSessionService()
-
+    
     // The running timer is saved on the phone (UserDefaults) so it survives
     // the app being closed. nil means no timer is running.
     @AppStorage("activeTimer.startedAt") private var storedStartedAt: Double?
+    // app storage writes to UserDefaults which is saved on disk
     @AppStorage("activeTimer.activityId") private var storedActivityId: String?
+    // Changing the variable redraws the view. When storedStartedAt changes, SwiftUI runs body again.
     @AppStorage("activeTimer.userId") private var storedUserId: String?
-
+    
     @State private var selectedActivityId: UUID?
     @State private var isSaving = false
     @State private var errorMessage: String?
-
+    
     /// Completed sessions for the summaries, newest first.
     @State private var sessions: [TrackingSessionDTO] = []
-
+    
     // MARK: - Derived state
 
-    /// When the running timer started, but only if it belongs to the signed-in user.
-    private var startedAt: Date? {
+    // runningTimer is a computed property so every time its read
+    // swfit executes the following code and returns a RunningTimer or Nil
+    private var runningTimer: RunningTimer? {
+        // the gaurd means all lines must succeed otherwise jumps out to else statemnet
         guard let storedStartedAt,
-              storedUserId == authManager.currentUserId?.uuidString
-        else { return nil }
-        return Date(timeIntervalSince1970: storedStartedAt)
+              // comes from the app storage
+              let activityId = storedActivityId.flatMap(UUID.init(uuidString:)),
+              let userId = storedUserId.flatMap(UUID.init(uuidString:)),
+              // check if above user id is the signed in user
+              userId == authManager.currentUserId
+                else { return nil }
+        
+        return RunningTimer(
+            activityId: activityId,
+            userId: userId,
+            startedAt: Date(timeIntervalSince1970: storedStartedAt)
+        )
     }
-
+    
     /// The activity the running timer is tracking.
+    /// gets the activity that matches the currently stored activity
     private var runningActivity: ActivityDTO? {
-        activityStore.activities.first { $0.id.uuidString == storedActivityId }
+        activityStore.activities.first { $0.id == runningTimer?.activityId }
     }
-
+    
     private var selectedActivity: ActivityDTO? {
         activityStore.activities.first { $0.id == selectedActivityId }
     }
-
+    
     private var todayTotal: TimeInterval {
         SessionStats.totalDuration(
             of: sessions,
@@ -51,7 +65,7 @@ struct HomeView: View {
             activityId: selectedActivityId
         )
     }
-
+    
     private var weekTotal: TimeInterval {
         SessionStats.totalDuration(
             of: sessions,
@@ -59,22 +73,30 @@ struct HomeView: View {
             activityId: selectedActivityId
         )
     }
-
+    
     private var recentSessions: [TrackingSessionDTO] {
         Array(SessionStats.sessions(sessions, for: selectedActivityId).prefix(5))
     }
-
+    
     // MARK: - Body
-
+    
     var body: some View {
         NavigationStack {
+            // Group applies the navigationTitle, onChange functions to both views inside
             Group {
-                if let startedAt {
-                    runningView(startedAt: startedAt)
+                // there is a current running timer
+                if let runningTimer {
+                    RunningTimerView(
+                        activityName: runningActivity?.name ?? "Unknown activity",
+                        startedAt: runningTimer.startedAt,
+                        isSaving: isSaving,
+                        onStop: {Task {await stopTimer()} }
+                    )
                 } else {
                     idleView
                 }
             }
+            
             .navigationTitle("Home")
             // Runs on first appear and whenever the list changes, so the
             // picker always points at a real activity.
@@ -94,9 +116,9 @@ struct HomeView: View {
             }
         }
     }
-
+    
     // MARK: - Idle
-
+    
     private var idleView: some View {
         ScrollView {
             VStack(spacing: 32) {
@@ -109,14 +131,14 @@ struct HomeView: View {
             await loadSessions()
         }
     }
-
+    
     private var startSection: some View {
         VStack(spacing: 16) {
             Text("No active timer")
                 .font(.headline)
             Text("Tap your NFC to start")
                 .foregroundStyle(.secondary)
-
+            
             if activityStore.activities.isEmpty {
                 Text("Add an activity in Settings → Activities to start tracking.")
                     .font(.footnote)
@@ -130,7 +152,7 @@ struct HomeView: View {
                     }
                 }
             }
-
+            
             Button("Start") {
                 startTimer()
             }
@@ -138,7 +160,7 @@ struct HomeView: View {
             .disabled(selectedActivityId == nil)
         }
     }
-
+    
     private var summarySection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(selectedActivity?.name ?? "All activities")
@@ -148,7 +170,6 @@ struct HomeView: View {
                 statCard(title: "Today", seconds: todayTotal)
                 statCard(title: "This week", seconds: weekTotal)
             }
-
             Text("Recent")
                 .font(.headline)
 
@@ -174,7 +195,7 @@ struct HomeView: View {
             }
         }
     }
-
+    
     private func statCard(title: String, seconds: TimeInterval) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -189,68 +210,36 @@ struct HomeView: View {
         .background(Color(.systemGray6))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
-
-    // MARK: - Running
-
-    private func runningView(startedAt: Date) -> some View {
-        VStack(spacing: 24) {
-            Text(runningActivity?.name ?? "Unknown activity")
-                .font(.title2)
-            Text(startedAt, style: .timer)
-                .font(.system(size: 64, weight: .bold, design: .rounded))
-                .monospacedDigit()
-
-            Button(role: .destructive) {
-                Task { await stopTimer() }
-            } label: {
-                if isSaving {
-                    ProgressView()
-                } else {
-                    Text("Stop")
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(isSaving)
-        }
-    }
-
+    
     // MARK: - Actions
-
+    
     private func startTimer() {
         guard let selectedActivityId,
               let userId = authManager.currentUserId
         else { return }
-
+        
         storedActivityId = selectedActivityId.uuidString
         storedUserId = userId.uuidString
         storedStartedAt = Date.now.timeIntervalSince1970
     }
-
+    
     private func stopTimer() async {
-        guard let startedAt else { return }
-
-        guard let userId = authManager.currentUserId else {
-            errorMessage = "You're not signed in."
-            return
-        }
-        guard let activityIdString = storedActivityId,
-              let activityId = UUID(uuidString: activityIdString)
-        else {
-            errorMessage = "This timer has no activity. It was cleared."
-            clearActiveTimer()
-            return
-        }
-
+        guard let timer = runningTimer
+                else { return }
+        
         isSaving = true
-        defer { isSaving = false }
-
+        // is saving alwayd returns false at the end of function run
+        defer {
+            isSaving = false
+        }
+        
         do {
             _ = try await sessionService.createSession(
-                userId: userId,
-                activityId: activityId,
+                userId: timer.userId,
+                activityId: timer.activityId,
                 nfcTagId: nil,
-                date: startedAt,
-                duration: Date.now.timeIntervalSince(startedAt)
+                date: timer.startedAt,
+                duration: Date.now.timeIntervalSince(timer.startedAt)
             )
             // Only clear the timer once the session is safely saved.
             clearActiveTimer()
@@ -260,22 +249,22 @@ struct HomeView: View {
             errorMessage = "\(error.localizedDescription) Your timer is still running. Tap Stop to try again."
         }
     }
-
+    
     private func clearActiveTimer() {
         storedStartedAt = nil
         storedActivityId = nil
         storedUserId = nil
     }
-
+    
     /// Keep the picker pointing at an activity that exists; default to the first one.
     private func ensureValidSelection() {
         if selectedActivity == nil {
             selectedActivityId = activityStore.activities.first?.id
         }
     }
-
+    
     // MARK: - Data
-
+    
     private func loadSessions() async {
         guard let userId = authManager.currentUserId else { return }
         do {
