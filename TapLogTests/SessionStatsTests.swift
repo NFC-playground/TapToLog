@@ -65,8 +65,8 @@ struct SessionStatsTests {
     }
 
     @Test(arguments: zip(
-        [0.0, 59, 60, 3600, 5025],
-        ["0m", "0m", "1m", "1h 0m", "1h 23m"]
+        [0.0, 30, 59, 60, 3600, 5025],
+        ["0m", "<1m", "<1m", "1m", "1h 0m", "1h 23m"]
     ))
     func shortFormat(seconds: Double, expected: String) {
         #expect(DurationFormat.short(seconds) == expected)
