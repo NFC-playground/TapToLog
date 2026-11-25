@@ -30,68 +30,23 @@ struct ManageActivitiesView: View {
         let summary: ActivityStore.DeletionSummary
     }
 
+    // The body is built in stages (list → alerts → dialogs → error alert).
+    // One long modifier chain was too complex for the compiler to type-check in time.
     var body: some View {
+        listWithDialogs
+            .alert("Something Went Wrong", isPresented: errorBinding) {
+                Button("OK") { }
+            } message: {
+                Text(activityStore.errorMessage ?? "")
+            }
+    }
+
+    // MARK: - List
+
+    private var activityList: some View {
         List {
-            // MARK: Active
-            Section {
-                if activityStore.activities.isEmpty {
-                    ContentUnavailableView(
-                        "No activities yet",
-                        systemImage: "list.bullet",
-                        description: Text("Tap + to add something you want to track")
-                    )
-                } else {
-                    ForEach(activityStore.activities) { activity in
-                        // Tap a row to rename it
-                        Button {
-                            renameText = activity.name
-                            activityToRename = activity
-                        } label: {
-                            Text(activity.name)
-                                .foregroundStyle(.primary)
-                        }
-                        // Swipe left to archive (asks for confirmation first)
-                        .swipeActions {
-                            Button {
-                                activityToArchive = activity
-                            } label: {
-                                Label("Archive", systemImage: "archivebox")
-                            }
-                            .tint(.orange)
-                        }
-                    }
-                }
-            }
-
-            // MARK: Archived
-            if !activityStore.archivedActivities.isEmpty {
-                Section {
-                    ForEach(activityStore.archivedActivities) { activity in
-                        Text(activity.name)
-                            .foregroundStyle(.secondary)
-                            .swipeActions {
-                                // First button is what a full swipe triggers, so keep the safe one first.
-                                Button {
-                                    Task { await activityStore.restore(activity) }
-                                } label: {
-                                    Label("Restore", systemImage: "arrow.uturn.backward")
-                                }
-                                .tint(.blue)
-
-                                Button {
-                                    Task { await prepareDeletion(of: activity) }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                                .tint(.red)
-                            }
-                    }
-                } header: {
-                    Text("Archived")
-                } footer: {
-                    Text("Archived activities are hidden from Home, and their sessions stay in History. Swipe to restore or delete permanently.")
-                }
-            }
+            activeSection
+            archivedSection
         }
         .navigationTitle("Activities")
         .toolbar {
@@ -104,64 +59,150 @@ struct ManageActivitiesView: View {
                 }
             }
         }
-        // MARK: Add
-        .alert("New Activity", isPresented: $showingAddAlert) {
-            TextField("Name", text: $newActivityName)
-                .textInputAutocapitalization(.words)
-            Button("Cancel", role: .cancel) { }
-            Button("Add") {
-                Task { await addActivity() }
+    }
+
+    private var activeSection: some View {
+        Section {
+            if activityStore.activities.isEmpty {
+                ContentUnavailableView(
+                    "No activities yet",
+                    systemImage: "list.bullet",
+                    description: Text("Tap + to add something you want to track")
+                )
+            } else {
+                ForEach(activityStore.activities) { activity in
+                    activeRow(activity)
+                }
             }
-            .disabled(trimmed(newActivityName).isEmpty)
         }
-        // MARK: Rename
-        .alert(
-            "Rename Activity",
-            isPresented: isPresenting($activityToRename),
-            presenting: activityToRename
-        ) { activity in
-            TextField("Name", text: $renameText)
-                .textInputAutocapitalization(.words)
-            Button("Cancel", role: .cancel) { }
-            Button("Save") {
-                Task { await activityStore.rename(activity, to: renameText) }
+    }
+
+    @ViewBuilder
+    private var archivedSection: some View {
+        if !activityStore.archivedActivities.isEmpty {
+            Section {
+                ForEach(activityStore.archivedActivities) { activity in
+                    archivedRow(activity)
+                }
+            } header: {
+                Text("Archived")
+            } footer: {
+                Text("Archived activities are hidden from Home, and their sessions stay in History. Swipe to restore or delete permanently.")
             }
-            .disabled(trimmed(renameText).isEmpty)
         }
-        // MARK: Archive confirmation
-        .confirmationDialog(
-            "Archive \(activityToArchive?.name ?? "activity")?",
-            isPresented: isPresenting($activityToArchive),
-            titleVisibility: .visible,
-            presenting: activityToArchive
-        ) { activity in
-            Button("Archive") {
-                Task { await activityStore.archive(activity) }
+    }
+
+    /// Tap to rename; swipe left to archive (asks for confirmation first).
+    private func activeRow(_ activity: ActivityDTO) -> some View {
+        Button {
+            renameText = activity.name
+            activityToRename = activity
+        } label: {
+            Text(activity.name)
+                .foregroundStyle(.primary)
+        }
+        .swipeActions {
+            Button {
+                activityToArchive = activity
+            } label: {
+                Label("Archive", systemImage: "archivebox")
             }
-            Button("Cancel", role: .cancel) { }
-        } message: { _ in
-            Text("It will be hidden from your list and Home. Past sessions stay in History, and you can restore it anytime.")
+            .tint(.orange)
         }
-        // MARK: Permanent delete confirmation
-        .confirmationDialog(
-            "Delete \(pendingDeletion?.activity.name ?? "activity") permanently?",
-            isPresented: isPresenting($pendingDeletion),
-            titleVisibility: .visible,
-            presenting: pendingDeletion
-        ) { pending in
-            Button("Delete Permanently", role: .destructive) {
-                Task { await activityStore.deletePermanently(pending.activity) }
+    }
+
+    /// Swipe left to restore or delete permanently.
+    private func archivedRow(_ activity: ActivityDTO) -> some View {
+        Text(activity.name)
+            .foregroundStyle(.secondary)
+            .swipeActions {
+                // First button is what a full swipe triggers, so keep the safe one first.
+                Button {
+                    Task { await activityStore.restore(activity) }
+                } label: {
+                    Label("Restore", systemImage: "arrow.uturn.backward")
+                }
+                .tint(.blue)
+
+                Button {
+                    Task { await prepareDeletion(of: activity) }
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .tint(.red)
             }
-            Button("Cancel", role: .cancel) { }
-        } message: { pending in
-            Text(deletionMessage(pending.summary))
-        }
-        // MARK: Errors
-        .alert("Something Went Wrong", isPresented: errorBinding) {
-            Button("OK") { }
-        } message: {
-            Text(activityStore.errorMessage ?? "")
-        }
+    }
+
+    // MARK: - Alerts
+
+    private var listWithAlerts: some View {
+        activityList
+            .alert("New Activity", isPresented: $showingAddAlert) {
+                TextField("Name", text: $newActivityName)
+                    .textInputAutocapitalization(.words)
+                Button("Cancel", role: .cancel) { }
+                Button("Add") {
+                    Task { await addActivity() }
+                }
+                .disabled(trimmed(newActivityName).isEmpty)
+            }
+            .alert(
+                "Rename Activity",
+                isPresented: isPresenting($activityToRename),
+                presenting: activityToRename
+            ) { activity in
+                TextField("Name", text: $renameText)
+                    .textInputAutocapitalization(.words)
+                Button("Cancel", role: .cancel) { }
+                Button("Save") {
+                    Task { await activityStore.rename(activity, to: renameText) }
+                }
+                .disabled(trimmed(renameText).isEmpty)
+            }
+    }
+
+    // MARK: - Confirmation Dialogs
+
+    private var listWithDialogs: some View {
+        listWithAlerts
+            .confirmationDialog(
+                archiveTitle,
+                isPresented: isPresenting($activityToArchive),
+                titleVisibility: .visible,
+                presenting: activityToArchive
+            ) { activity in
+                Button("Archive") {
+                    Task { await activityStore.archive(activity) }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: { _ in
+                Text("It will be hidden from your list and Home. Past sessions stay in History, and you can restore it anytime.")
+            }
+            .confirmationDialog(
+                deleteTitle,
+                isPresented: isPresenting($pendingDeletion),
+                titleVisibility: .visible,
+                presenting: pendingDeletion
+            ) { pending in
+                Button("Delete Permanently", role: .destructive) {
+                    Task { await activityStore.deletePermanently(pending.activity) }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: { pending in
+                Text(deletionMessage(pending.summary))
+            }
+    }
+
+    // Titles built as plain Strings: interpolating `x ?? "..."` inside a
+    // string literal is slow for the compiler to type-check.
+    private var archiveTitle: String {
+        let name = activityToArchive?.name ?? "activity"
+        return "Archive \(name)?"
+    }
+
+    private var deleteTitle: String {
+        let name = pendingDeletion?.activity.name ?? "activity"
+        return "Delete \(name) permanently?"
     }
 
     // MARK: - Actions
