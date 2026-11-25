@@ -33,6 +33,16 @@ class TrackingSessionService: ObservableObject {
             .value
     }
 
+    /// Fetch every session for one activity (used to show what a permanent delete removes)
+    func fetchSessions(forActivityId activityId: UUID) async throws -> [TrackingSessionDTO] {
+        try await client
+            .from("tracking_sessions")
+            .select()
+            .eq("activity_id", value: activityId.uuidString)
+            .execute()
+            .value
+    }
+
     /// Fetch all sessions (for admin/debug purposes)
     func fetchAllSessions() async throws -> [TrackingSessionDTO] {
         try await client
@@ -105,6 +115,15 @@ class TrackingSessionService: ObservableObject {
             .from("tracking_sessions")
             .delete()
             .eq("id", value: id.uuidString)
+            .execute()
+    }
+
+    /// Delete every session for one activity
+    func deleteSessions(forActivityId activityId: UUID) async throws {
+        try await client
+            .from("tracking_sessions")
+            .delete()
+            .eq("activity_id", value: activityId.uuidString)
             .execute()
     }
 
