@@ -7,9 +7,12 @@
 
 import Foundation
 
-/// Turns a number of seconds into short text like "1h 23m" or "45m".
+/// Turns a number of seconds into short text like "1h 23m" or "45m" ("<1m" under a minute).
 enum DurationFormat {
     static func short(_ seconds: TimeInterval) -> String {
+        if seconds > 0 && seconds < 60 {
+            return "<1m"
+        }
         let totalMinutes = Int(seconds) / 60
         let hours = totalMinutes / 60
         let minutes = totalMinutes % 60

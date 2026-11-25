@@ -22,6 +22,7 @@ struct HomeView: View {
     
     @State private var selectedActivityId: UUID?
     @State private var isSaving = false
+    @State private var showingAddActivity = false
     @State private var errorMessage: String?
     
     /// Completed sessions for the summaries, newest first.
@@ -106,6 +107,15 @@ struct HomeView: View {
             .task {
                 await loadSessions()
             }
+            .newActivityAlert(isPresented: $showingAddActivity)
+            .alert("Something Went Wrong", isPresented: Binding(
+                get: { activityStore.errorMessage != nil },
+                set: { if !$0 { activityStore.errorMessage = nil } }
+            )) {
+                Button("OK") { }
+            } message: {
+                Text(activityStore.errorMessage ?? "")
+            }
             .alert("Couldn't Save Session", isPresented: Binding(
                 get: { errorMessage != nil },
                 set: { if !$0 { errorMessage = nil } }
@@ -140,17 +150,25 @@ struct HomeView: View {
                 .foregroundStyle(.secondary)
             
             if activityStore.activities.isEmpty {
-                Text("Add an activity in Settings → Activities to start tracking.")
+                Text("Add an activity to start tracking.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
+                Button("Add Activity", systemImage: "plus") {
+                    showingAddActivity = true
+                }
+                .buttonStyle(.bordered)
             } else {
                 Picker("Activity", selection: $selectedActivityId) {
                     ForEach(activityStore.activities) { activity in
                         Text(activity.name).tag(UUID?.some(activity.id))
                     }
                 }
+                Button("New Activity", systemImage: "plus") {
+                    showingAddActivity = true
+                }
+                .font(.footnote)
             }
             
             Button("Start") {

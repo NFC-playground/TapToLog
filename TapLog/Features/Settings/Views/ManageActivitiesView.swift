@@ -16,7 +16,6 @@ struct ManageActivitiesView: View {
     @AppStorage("activeTimer.activityId") private var runningActivityId: String?
 
     @State private var showingAddAlert = false
-    @State private var newActivityName = ""
 
     @State private var activityToRename: ActivityDTO?
     @State private var renameText = ""
@@ -52,7 +51,6 @@ struct ManageActivitiesView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    newActivityName = ""
                     showingAddAlert = true
                 } label: {
                     Label("Add Activity", systemImage: "plus")
@@ -61,13 +59,27 @@ struct ManageActivitiesView: View {
         }
     }
 
+    private var hasOnlyArchived: Bool {
+        !activityStore.archivedActivities.isEmpty
+    }
+
+    private var emptyTitle: String {
+        if hasOnlyArchived { return "No active activities" }
+        return "No activities yet"
+    }
+
+    private var emptyDescription: String {
+        if hasOnlyArchived { return "Tap + to add one, or restore one from Archived below" }
+        return "Tap + to add something you want to track"
+    }
+
     private var activeSection: some View {
         Section {
             if activityStore.activities.isEmpty {
                 ContentUnavailableView(
-                    "No activities yet",
+                    emptyTitle,
                     systemImage: "list.bullet",
-                    description: Text("Tap + to add something you want to track")
+                    description: Text(emptyDescription)
                 )
             } else {
                 ForEach(activityStore.activities) { activity in
@@ -101,6 +113,7 @@ struct ManageActivitiesView: View {
             Text(activity.name)
                 .foregroundStyle(.primary)
         }
+        .tint(.primary)
         .swipeActions {
             Button {
                 activityToArchive = activity
@@ -137,15 +150,7 @@ struct ManageActivitiesView: View {
 
     private var listWithAlerts: some View {
         activityList
-            .alert("New Activity", isPresented: $showingAddAlert) {
-                TextField("Name", text: $newActivityName)
-                    .textInputAutocapitalization(.words)
-                Button("Cancel", role: .cancel) { }
-                Button("Add") {
-                    Task { await addActivity() }
-                }
-                .disabled(trimmed(newActivityName).isEmpty)
-            }
+            .newActivityAlert(isPresented: $showingAddAlert)
             .alert(
                 "Rename Activity",
                 isPresented: isPresenting($activityToRename),
@@ -206,11 +211,6 @@ struct ManageActivitiesView: View {
     }
 
     // MARK: - Actions
-
-    private func addActivity() async {
-        guard let userId = authManager.currentUserId else { return }
-        await activityStore.add(name: trimmed(newActivityName), userId: userId)
-    }
 
     /// Loads what a permanent delete would remove, then shows the confirmation.
     private func prepareDeletion(of activity: ActivityDTO) async {
