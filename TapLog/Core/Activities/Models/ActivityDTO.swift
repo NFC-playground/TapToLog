@@ -13,16 +13,18 @@ struct ActivityDTO: Codable, Identifiable, Hashable {
     let activityDescription: String?   // nullable in the `activities` table
     let createdAt: Date
     let userId: UUID?
-    
+    let archivedAt: Date?              // nil = active, a date = archived
+
     // Optional: embedded user object when doing joins
     var user: UserDTO?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case name
         case activityDescription = "activity_description"
         case createdAt = "created_at"
         case userId = "user_id"
+        case archivedAt = "archived_at"
         case user
     }
 }

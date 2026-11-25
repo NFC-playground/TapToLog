@@ -18,7 +18,8 @@ class ActivityService: ObservableObject {
 
     // MARK: - Fetch Methods
 
-    /// Fetch all activities for a specific user
+    /// Fetch all of a user's activities, archived ones included.
+    /// `ActivityStore` splits them into active and archived.
     func fetchActivities(forUserId userId: UUID) async throws -> [ActivityDTO] {
         try await client
             .from("activities")
@@ -90,6 +91,49 @@ class ActivityService: ObservableObject {
             .from("activities")
             .update(row)
             .eq("id", value: activity.id.uuidString)
+            .select()
+            .single()
+            .execute()
+            .value
+    }
+
+    /// Change just the activity's name
+    func renameActivity(id: UUID, to name: String) async throws -> ActivityDTO {
+        struct NameUpdate: Encodable {
+            let name: String
+        }
+
+        return try await client
+            .from("activities")
+            .update(NameUpdate(name: name))
+            .eq("id", value: id.uuidString)
+            .select()
+            .single()
+            .execute()
+            .value
+    }
+
+    /// Archive (pass a date) or restore (pass nil) an activity
+    func setArchived(id: UUID, archivedAt: Date?) async throws -> ActivityDTO {
+        struct ArchiveUpdate: Encodable {
+            let archivedAt: Date?
+
+            enum CodingKeys: String, CodingKey {
+                case archivedAt = "archived_at"
+            }
+
+            // Swift normally leaves out nil values when encoding. We need
+            // "archived_at": null sent explicitly so restoring clears the column.
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(archivedAt, forKey: .archivedAt)
+            }
+        }
+
+        return try await client
+            .from("activities")
+            .update(ArchiveUpdate(archivedAt: archivedAt))
+            .eq("id", value: id.uuidString)
             .select()
             .single()
             .execute()
