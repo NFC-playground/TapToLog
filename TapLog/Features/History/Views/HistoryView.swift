@@ -69,17 +69,6 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        Task {
-                            try? await authManager.signOut()
-                        }
-                    } label: {
-                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                }
-            }
             .task {
                 await loadSessions()
             }
